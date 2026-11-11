@@ -4,6 +4,7 @@ import { Swing, lengthForRate, heartLength } from './physics.js';
 import { BreathTracker } from './breath.js';
 import { Scene } from './scene.js';
 import { CameraSource, KeyboardSource, API_KEY } from './sources.js';
+import { Sound } from './sound.js';
 
 // Each level is a longer rope, so a slower swing and slower breathing.
 const LEVELS = [15, 12, 10, 8, 6].map((rate) => ({ rate, length: lengthForRate(rate) }));
@@ -21,12 +22,14 @@ const el = {
     cardLabel: $('card-label'), cardTitle: $('card-title'), cardText: $('card-text'), cardWait: $('card-wait'),
     endTitle: $('end-title'), endHeart: $('end-heart'), endBreath: $('end-breath'),
     btnCamera: $('btn-camera'), btnPractice: $('btn-practice'), btnGo: $('btn-go'),
+    btnSound: $('btn-sound'),
     btnStop: $('btn-stop'), btnAgain: $('btn-again'), btnFinish: $('btn-finish'), keyNote: $('key-note'),
 };
 
 const scene = new Scene($('scene'));
 const tracker = new BreathTracker();
 const swing = new Swing(LEVELS[0].length);
+const sound = new Sound();
 
 const game = {
     mode: 'consent',   // consent | card | play | end
@@ -101,6 +104,7 @@ function openLevel(index) {
 
 function finishLevel() {
     scene.celebrate();
+    sound.win();
     if (game.level + 1 < LEVELS.length) {
         openLevel(game.level + 1);
         el.cardLabel.textContent = `Level ${game.level} done`;
@@ -154,6 +158,7 @@ const handlers = {
 
 async function begin(source, startLevel = 0) {
     showError('');
+    sound.start();
     tracker.reset();
     tracker.invert = el.flip.checked;
     game.pulses = [];
@@ -174,6 +179,7 @@ async function begin(source, startLevel = 0) {
 async function stop() {
     const source = game.source;
     game.source = null;
+    sound.stop();
     if (source) await source.stop();
     el.preview.srcObject = null;
     el.preview.hidden = true;
@@ -186,6 +192,13 @@ el.btnGo.addEventListener('click', () => { show('play'); });
 el.btnStop.addEventListener('click', stop);
 el.btnFinish.addEventListener('click', stop);
 el.btnAgain.addEventListener('click', () => openLevel(0));
+function toggleSound() {
+    sound.setMuted(!sound.muted);
+    el.btnSound.textContent = sound.muted ? 'Sound is off' : 'Sound is on';
+    el.btnSound.setAttribute('aria-pressed', String(!sound.muted));
+}
+el.btnSound.addEventListener('click', toggleSound);
+window.addEventListener('keydown', (e) => { if (e.code === 'KeyM' && game.mode !== 'consent') toggleSound(); });
 el.lag.addEventListener('input', () => setLag(Number(el.lag.value)));
 el.flip.addEventListener('change', () => { tracker.invert = el.flip.checked; });
 
@@ -203,12 +216,15 @@ function frame(now) {
     lastFrame = now;
 
     const playing = game.mode === 'play';
-    const push = playing ? tracker.drive(swing.w0, game.lagSec) : 0;
+    // On the first screen the swing sways gently by itself.
+    const idle = game.mode === 'consent' ? 0.35 * Math.sin(swing.w0 * now / 1000) : 0;
+    const push = playing ? tracker.drive(swing.w0, game.lagSec) : idle;
     const passed = swing.step(dt, push);
     const amplitude = swing.amplitude;
 
     if (playing && passed && amplitude >= GOAL) {
         game.highSwings++;
+        sound.chime(game.highSwings - 1);
         drawProgress();
         if (game.highSwings >= NEEDED) finishLevel();
     }
@@ -236,11 +252,14 @@ function frame(now) {
     }
     el.hint.hidden = !playing;
 
+    const dusk = game.mode === 'consent' ? 0 : Math.min(1, amplitude / GOAL);
+    sound.update(Math.abs(swing.omega) / (swing.w0 * GOAL), Math.sin(swing.theta) * 2, dusk);
+
     scene.draw({
         theta: swing.theta,
         length: swing.length,
         goal: GOAL,
-        progress: game.mode === 'consent' ? 0 : amplitude / GOAL,
+        progress: dusk,
         dt,
     });
     requestAnimationFrame(frame);
