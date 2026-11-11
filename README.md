@@ -22,7 +22,9 @@ npm start
 - `src/physics.js`: the pendulum (damped, pushed by breath) and the length formulas.
 - `src/breath.js`: turns the raw breathing line into a push, whatever its units.
 - `src/sources.js`: the camera (SmartSpectra SDK) and the keyboard practice source.
-- `src/scene.js`: the drawing. `src/app.js`: screens, levels and the game loop.
+- `src/scene.js`: the 3D world (three.js): tree, swing, hills, and a sun that sets as the swing climbs.
+- `src/sound.js`: wind, bird calls and chimes, all made in code with Web Audio. Press M to mute.
+- `src/app.js`: screens, levels and the game loop.
 - `main.cjs`: the Electron window. `test/`: physics tests (`npm test`).
 - `quickstart/`: Presage's sample app, kept locally for testing the SDK. Not part of the entry and git-ignored.
 
