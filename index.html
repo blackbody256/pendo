@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Security-Policy"
+          content="default-src 'self'; style-src 'self' 'unsafe-inline'; worker-src 'self' blob:; media-src blob:;">
+    <title>Pendo</title>
+    <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+    <canvas id="scene"></canvas>
+
+    <!-- Shown while playing -->
+    <div id="hud" hidden>
+        <div class="card top-left">
+            <div class="label" id="level-label">Level 1 of 5</div>
+            <div class="big"><span id="rope-length">4.0</span> m rope</div>
+            <div class="small">Swings <span id="target-rate">15</span> times a minute</div>
+        </div>
+
+        <div class="card top-right">
+            <div class="row"><span class="label">Your breathing</span><span class="value"><span id="your-rate">–</span> /min</span></div>
+            <div class="row"><span class="label">Your pulse</span><span class="value"><span id="your-pulse">–</span> /min</span></div>
+            <div class="row"><span class="label">Swing height</span><span class="value"><span id="height">0.0</span> m</span></div>
+        </div>
+
+        <div id="progress" class="card" aria-label="High swings this level"></div>
+        <div id="hint">Breathe slowly in and out to start the swing.</div>
+
+        <div id="breath-meter" title="Your breath: up is in, down is out"><div id="breath-fill"></div></div>
+
+        <div id="camera-box" class="card">
+            <video id="preview" autoplay playsinline muted hidden></video>
+            <div id="status" class="small">–</div>
+            <button id="btn-stop" class="quiet">Stop and go back</button>
+        </div>
+
+        <details id="tuning" class="card">
+            <summary>Tuning</summary>
+            <label>Signal delay: <span id="lag-value">0.5</span> s
+                <input id="lag" type="range" min="0" max="2.5" step="0.1" value="0.5">
+            </label>
+            <label><input id="flip" type="checkbox"> Flip breathing direction</label>
+            <p class="small">If breathing out pulls the swing back, tick Flip. If the swing feels late, raise the delay.</p>
+        </details>
+    </div>
+
+    <!-- First screen: what the camera does, and consent -->
+    <div id="consent" class="overlay">
+        <div class="panel">
+            <h1>Pendo</h1>
+            <p class="lead">Push a swing with your breath. Breathe in time with it and it climbs.</p>
+
+            <h2>Before the camera turns on</h2>
+            <ul>
+                <li><strong>What it reads:</strong> your breathing, from how your chest moves, and your pulse, from your face.</li>
+                <li><strong>What is kept:</strong> nothing. Pendo does not record or save video or readings. They are used while you play and are gone when you stop.</li>
+                <li><strong>Who does the reading:</strong> the Presage SmartSpectra SDK, built into this app. It connects to Presage over the internet to check the app's key. Pendo has switched its usage telemetry off.</li>
+                <li><strong>You are in control:</strong> the camera only starts when you press the button below. "Stop and go back" turns it off at any time.</li>
+                <li><strong>This is a game, not a health tool.</strong> The readings are rough. Don't use them to judge your health.</li>
+                <li><strong>Breathe gently.</strong> If you feel dizzy, stop and breathe normally.</li>
+            </ul>
+
+            <div class="buttons">
+                <button id="btn-camera" class="primary">I agree. Start the camera</button>
+                <button id="btn-practice">Practise without a camera</button>
+            </div>
+            <p id="key-note" class="small" hidden>No API key found, so the camera is off. Put your key in the <code>.env</code> file and restart.</p>
+            <p class="small">Sit about one metre away, with your face, chest and shoulders in the picture, facing a lamp or window.</p>
+        </div>
+    </div>
+
+    <!-- Between levels -->
+    <div id="level-card" class="overlay" hidden>
+        <div class="panel narrow">
+            <div class="label" id="card-label">Level 1 of 5</div>
+            <h2 id="card-title">A 4.0 m rope</h2>
+            <p id="card-text"></p>
+            <div class="buttons">
+                <button id="btn-go" class="primary">Start</button>
+            </div>
+            <p id="card-wait" class="small"></p>
+        </div>
+    </div>
+
+    <!-- The end -->
+    <div id="end-card" class="overlay" hidden>
+        <div class="panel">
+            <div class="label">You did it</div>
+            <h1 id="end-title">Your heart is a pendulum</h1>
+            <p id="end-heart" class="lead"></p>
+            <p id="end-breath"></p>
+            <h2>Why a pendulum?</h2>
+            <p>The story goes that in 1583 a young Galileo watched a lamp swinging in Pisa cathedral and timed it against his own pulse. Around 1602 the doctor Santorio turned the idea round: he lengthened a weighted cord until its swing matched a patient's pulse, then read the pulse off as a length. You have just done the same thing with a camera.</p>
+            <p class="small">The formula is L = g·T² / 4π², where T is the time for one full swing.</p>
+            <div class="buttons">
+                <button id="btn-again" class="primary">Play again</button>
+                <button id="btn-finish">Stop and go back</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="error" class="card" hidden></div>
+
+    <script src="./dist/app.bundle.js"></script>
+</body>
+</html>
