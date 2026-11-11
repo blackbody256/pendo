@@ -1,0 +1,26 @@
+{
+  "name": "pendo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Push a swing with your breath. A physics game built on the Presage SmartSpectra SDK.",
+  "type": "module",
+  "main": "main.cjs",
+  "scripts": {
+    "build": "node --env-file-if-exists=.env build.mjs",
+    "start": "npm run build && electron .",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@smartspectra/node-sdk": "3.4.0"
+  },
+  "devDependencies": {
+    "chart.js": "^4.5.0",
+    "electron": "43.2.0",
+    "esbuild": "^0.25.0"
+  },
+  "overrides": {
+    "js-yaml": "4.3.2",
+    "fast-uri": "3.1.6",
+    "@xmldom/xmldom": "0.8.15"
+  }
+}
